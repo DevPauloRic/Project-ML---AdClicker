@@ -9,9 +9,10 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from imblearn.over_sampling import SMOTE
 
 
-NOMEARQUIVO = "AdClick.csv"
+NOMEARQUIVO = r"C:\Users\Paulo51026126.SENAC.002\Downloads\Meu Projeto\Project-ML---AdClicker\AdClick.csv"
 NOMEMODELO = "AdClick.pickle"
 
 def carregarDados(nomeArquivo):
@@ -32,17 +33,19 @@ def prepararDados(dados):
     # retorna dados básicos sobre o arquivo/dataset carregado
     # qtd colunas, qtd registros não nulos, tipo das colunas
     print(dados.info())
-
     # 5 primeiros registros do dataset
     print(dados.head())
-
     # 5 ultimos registros do dataset
     print(dados.tail())
-
     # retorna estatistica básicas dos campos do dadaset
     print(dados.describe())
 
+    
+
     dados['TimeSpentSeconds'] = dados['TimeSpentSeconds'].round(2)
+    Lb = LabelEncoder()
+    dados['AdType'] = Lb.fit_transform(dados['AdType'])
+    print(dados.info())
 
     return dados
 
@@ -71,9 +74,9 @@ def separarDados(dados):
 
     # separando o objetivo de estratificação [0,1] -- lista 70% e 30%
     Y = dados['Clicked'] # variavel dependente/alvo/target
-    X = dados[['TimeSpentSeconds','PagesVisited']] # variaveis independentes/feature
+    X = dados[['TimeSpentSeconds','PagesVisited', 'AdType']] # variaveis independentes/feature
     print(X.head())
-    #dadosTreino, dadosTeste = train_test_split(dados, test_size=0.3, train_size=0.7, stratify=Y)
+    
     x_train, x_test, y_train, y_test = train_test_split(X, Y, 
                                                         test_size=0.3,
                                                         train_size=0.7, 
@@ -81,7 +84,18 @@ def separarDados(dados):
                                                         random_state=42, 
                                                         stratify=Y)
 
-    return x_train, x_test, y_train, y_test
+    # Balanceamento da classe alvo ('Clicked') nos dados de treino usando SMOTE
+    print("\n--- Balanceando a classe target ('Clicked') nos dados de treino com SMOTE ---")
+    print("Distribuição das classes em y_train antes do SMOTE:")
+    print(y_train.value_counts())
+
+    smote = SMOTE(random_state=42)
+    x_train_resampled, y_train_resampled = smote.fit_resample(x_train, y_train)
+
+    print("\nDistribuição das classes em y_train após o SMOTE:")
+    print(pd.Series(y_train_resampled).value_counts())
+
+    return x_train_resampled, x_test, y_train_resampled, y_test
 
 def treinarModelo(x_train, x_test, y_train, y_test, nomeModelo=NOMEMODELO):
     print("\n--- Fase 4: Modelagem (Logistic Regression) ---")
