@@ -1,0 +1,18 @@
+# Ambientes Virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache e compilação
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs e Editores
+.vscode/
+.idea/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
